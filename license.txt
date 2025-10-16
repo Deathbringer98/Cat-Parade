@@ -1,0 +1,27 @@
+Cat Parade Box License
+Copyright (c) 2025 Matthew Menchinton (Deathbringer98)
+All rights reserved.
+
+This software and all associated media (including code, images, icons, and audio)
+are the property of Matthew Menchinton (the "Author"). 
+
+You are granted permission to:
+- Download and use the extension for personal, non-commercial use.
+- Share the official unmodified extension link from the Chrome Web Store or GitHub repository.
+
+You are NOT permitted to:
+- Copy, modify, or redistribute the source code, audio, images, or other assets
+  without explicit written permission from the Author.
+- Sell, sublicense, or include this software or its assets in other projects,
+  whether free or commercial.
+- Upload or distribute modified versions under any name.
+
+Any derivative works, forks, or remixes require written consent from the Author.
+Unauthorized use of any part of this project (including the name, assets, or code)
+is strictly prohibited.
+
+This software is provided "AS IS" without warranty of any kind.
+The Author shall not be held liable for any damages arising from its use.
+
+For licensing inquiries, commercial use, or collaboration,
+contact the Author via GitHub: https://github.com/Deathbringer98
