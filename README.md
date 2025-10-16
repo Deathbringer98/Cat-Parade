@@ -27,5 +27,6 @@ It’s pure nonsense — and that’s exactly the point.
 
 ## 🧩 Installation
 1. Download or clone this repo:
-   ```bash
- https://github.com/Deathbringer98/Cat-Parade
+   ```bash https://github.com/Deathbringer98/Cat-Parade
+
+
