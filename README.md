@@ -1,7 +1,7 @@
 # 🐾 Cat Parade Box
 
 **A chaotic Chrome extension full of running cats and endless meowing.**  
-Built originally as a joke project in under an hour — but somehow became *too good to delete*. 😺  
+Built originally as a joke project in under an hour, but somehow became *too good to delete*. 😺  
 
 ---
 
@@ -28,5 +28,6 @@ It’s pure nonsense — and that’s exactly the point.
 ## 🧩 Installation
 1. Download or clone this repo:
 https://github.com/Deathbringer98/Cat-Parade
+
 
 
