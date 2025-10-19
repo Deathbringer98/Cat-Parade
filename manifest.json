@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Cat Parade Box",
-  "version": "1.0.0",
+  "name": "Cat Games",
+  "version": "1.0.1",
   "description": "Toggle a floating box with animated cats.",
   "permissions": ["scripting", "activeTab", "tabs"],
+  "host_permissions": ["<all_urls>"],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -22,7 +23,17 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["audio/meowmeow-song.mp3"],
+      "resources": [
+        "assets/*.png",
+        "assets/*.jpg",
+        "assets/*.jpeg",
+        "assets/*.gif",
+        "assets/*.webp",
+        "audio/*.mp3",
+        "audio/*.ogg",
+        "audio/*.wav",
+        "styles.css"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

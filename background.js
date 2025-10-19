@@ -19,11 +19,54 @@ chrome.action.onClicked.addListener(async (tab) => {
     }
   }
   
-  // Toggle on current tab
-  await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    files: ["content.js"],
-  });
+  // Inject scripts sequentially with proper error handling
+  try {
+    // First inject extension URL helper
+    console.log("Injecting extension URL helper...");
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (extensionId) => {
+        window.CAT_EXTENSION_ID = extensionId;
+        window.getExtensionURL = (path) => `chrome-extension://${extensionId}/${path}`;
+        console.log('Extension URL helper injected with ID:', extensionId);
+      },
+      args: [chrome.runtime.id]
+    });
+    
+    console.log("Injecting cat-parade.js...");
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["cat-parade.js"],
+    });
+    
+    console.log("Injecting cat-asteroids.js...");
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["cat-asteroids.js"],
+    });
+    
+    console.log("Injecting content.js...");
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["content.js"],
+    });
+    
+    console.log("All scripts injected successfully");
+  } catch (error) {
+    console.error("Failed to inject scripts:", error);
+    
+    // Fallback: inject inline code
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          alert("Extension files could not be loaded. Please check if the extension is properly installed and try again.");
+        }
+      });
+    } catch (fallbackError) {
+      console.error("Even fallback failed:", fallbackError);
+    }
+  }
   
   // Update active tab
   activeTabId = tab.id;
