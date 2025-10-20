@@ -852,36 +852,21 @@ window.CatAsteroidsGame = {
     this.gameState.bossMaxHP = 50 * Math.pow(2, this.gameState.bossMultiplier - 1);
     this.gameState.bossHP = this.gameState.bossMaxHP;
     
-    // Show boss warning
-    this.showBossWarning();
-    
-    // Create boss after warning
-    setTimeout(() => {
+    // Show boss warning and wait for it to finish
+    this.showBossWarning(() => {
       this.createBoss();
-      console.log('Attempting to play boss music...');
-      // Stop normal music first, then play boss music
-      if (this.audio.music.normal) {
-        this.audio.music.normal.pause();
-        this.audio.music.normal.currentTime = 0;
-      }
-      // Wait a moment then play boss music
-      setTimeout(() => {
-        this.playMusic('boss');
-      }, 500);
-    }, 3000);
+      this.playMusic('boss');
+    });
   },
 
   // Show boss warning overlay
-  showBossWarning: function() {
+  showBossWarning: function(onFinish) {
     const warning = document.createElement('div');
     warning.className = 'boss-warning';
     warning.style.cssText = `
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 0, 0, 0.8);
+      inset: 0;
+      background: rgba(255,0,0,0.8);
       z-index: 5000;
       display: flex;
       flex-direction: column;
@@ -889,104 +874,67 @@ window.CatAsteroidsGame = {
       justify-content: center;
       animation: bossWarningFlash 3s;
     `;
-    
-    const bossImageUrl = this.getExtensionURL('assets/cat-boss.png');
-    const imgTag = bossImageUrl 
-      ? `<img src="${bossImageUrl}" style="width: 120px; height: 120px; filter: drop-shadow(0 0 20px red); animation: bossEmojiGlow 1s infinite;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`
-      : '';
-    
-    warning.innerHTML = `
-      <div style="font-family: 'Courier New', monospace; font-size: 48px; color: white; font-weight: bold; text-shadow: 0 0 20px red; margin-bottom: 20px;">
-        ⚠️ BOSS APPROACHING ⚠️
-      </div>
-      ${imgTag}
-      <div style="font-size: 72px; ${bossImageUrl ? 'display: none;' : ''}">😼</div>
-    `;
-    
-    this.ui.box.appendChild(warning);
-    
-    // Play boss warning audio
-    this.playBossWarning();
-    
-    // Add CSS animations
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes bossWarningFlash {
-        0%, 100% { opacity: 0; }
-        50% { opacity: 1; }
-      }
-      @keyframes bossEmojiGlow {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px red); }
-        50% { transform: scale(1.1); filter: drop-shadow(0 0 20px red); }
-      }
-      @keyframes twinkle {
-        0%, 100% { opacity: 0.3; }
-        50% { opacity: 1; }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // Remove warning after 3 seconds
-    setTimeout(() => {
-      warning.remove();
-    }, 3000);
-  },
 
-  // Play boss warning audio - FORCE IT TO WORK
-  playBossWarning: function() {
-    console.log('🔊 FORCING boss warning audio to play...');
-    try {
-      if (!this.audio.music.bossWarning) {
-        console.error('❌ Boss warning audio not initialized!');
-        return;
-      }
-      
-      if (this.audio.muted) {
-        console.log('🔇 Audio is muted, skipping boss warning');
-        return;
-      }
-      
-      // Check if audio source is properly loaded
-      if (!this.audio.music.bossWarning.src) {
-        console.error('❌ Boss warning audio has no source URL!');
-        return;
-      }
-      
-      // FORCE stop and reset
-      this.audio.music.bossWarning.pause();
-      this.audio.music.bossWarning.currentTime = 0;
-      this.audio.music.bossWarning.volume = 0.8; // Higher volume
-      
-      console.log('🎵 Playing boss warning audio from:', this.audio.music.bossWarning.src);
-      console.log('🎵 Audio ready state:', this.audio.music.bossWarning.readyState);
-      console.log('🎵 Audio network state:', this.audio.music.bossWarning.networkState);
-      
-      // Check if audio is ready to play
-      if (this.audio.music.bossWarning.readyState >= 2) { // HAVE_CURRENT_DATA
-        // FORCE play immediately
-        const playPromise = this.audio.music.bossWarning.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            console.log('✅ SUCCESS: Boss warning audio is playing!');
-          }).catch(e => {
-            console.error('❌ FAILED to play boss warning audio:', e);
-            console.error('❌ Audio error code:', this.audio.music.bossWarning.error?.code);
-            console.error('❌ Audio error message:', this.audio.music.bossWarning.error?.message);
-          });
+    const bossImageUrl = this.getExtensionURL('assets/cat-boss.png');
+    warning.innerHTML = `
+      <div style="font-family:'Courier New',monospace;
+                  font-size:48px;color:white;
+                  font-weight:bold;text-shadow:0 0 20px red;
+                  margin-bottom:20px;">⚠️ BOSS APPROACHING ⚠️</div>
+      <img src="${bossImageUrl}" 
+           style="width:120px;height:120px;
+                  filter:drop-shadow(0 0 20px red);
+                  animation: bossEmojiGlow 1s infinite;"
+           onerror="this.style.display='none';">
+    `;
+
+    this.ui.box.appendChild(warning);
+
+    // Add CSS animations if not already present
+    if (!document.querySelector('#boss-warning-styles')) {
+      const style = document.createElement('style');
+      style.id = 'boss-warning-styles';
+      style.textContent = `
+        @keyframes bossWarningFlash {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
         }
-      } else {
-        console.warn('⚠️ Boss warning audio not ready, waiting for load...');
-        this.audio.music.bossWarning.addEventListener('canplaythrough', () => {
-          console.log('🎵 Boss warning audio now ready, attempting play...');
-          this.audio.music.bossWarning.play().catch(e => {
-            console.error('❌ FAILED to play boss warning audio after load:', e);
-          });
-        }, { once: true });
-      }
-    } catch (e) {
-      console.error('❌ Boss warning audio error:', e);
+        @keyframes bossEmojiGlow {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px red); }
+          50% { transform: scale(1.1); filter: drop-shadow(0 0 20px red); }
+        }
+      `;
+      document.head.appendChild(style);
     }
+
+    const proceed = () => {
+      warning.remove();
+      if (typeof onFinish === 'function') onFinish();
+    };
+
+    const warningAudio = this.audio.music.bossWarning;
+    if (!warningAudio) {
+      console.warn('⚠️ No boss warning audio loaded.');
+      setTimeout(proceed, 1500);
+      return;
+    }
+
+    warningAudio.volume = this.audio.muted ? 0 : 0.7;
+    warningAudio.currentTime = 0;
+
+    const safeEnd = () => {
+      warningAudio.removeEventListener('ended', safeEnd);
+      proceed();
+    };
+
+    warningAudio.addEventListener('ended', safeEnd);
+    warningAudio.play().catch(err => {
+      console.error('Boss warning playback failed:', err);
+      proceed();
+    });
+
+    // Safety fallback (4s)
+    setTimeout(proceed, 4000);
   },
 
   // Create boss enemy
@@ -1006,70 +954,50 @@ window.CatAsteroidsGame = {
     
     console.log('Boss object created, adding visual element...');
 
-    // Create boss element - FORCE PNG IMAGE ONLY
+    // Create boss element - PNG image with fallback and debug logging
     this.gameState.boss.element = document.createElement('img');
     const bossImageUrl = this.getExtensionURL('assets/cat-boss.png');
     console.log('🖼️ Loading boss image from:', bossImageUrl);
-    if (bossImageUrl) {
-      this.gameState.boss.element.src = bossImageUrl;
-    } else {
-      console.error('❌ Failed to get boss image URL - no extension URL helper available');
-      return;
-    }
-    this.gameState.boss.element.style.cssText = `
-      position: absolute;
-      left: ${this.gameState.boss.x}px;
-      top: ${this.gameState.boss.y}px;
-      width: ${this.gameState.boss.width}px;
-      height: ${this.gameState.boss.height}px;
-      user-select: none;
-      pointer-events: none;
-      z-index: 300;
-      filter: drop-shadow(0 0 20px red);
-      animation: bossFloat 2s ease-in-out infinite;
-      object-fit: contain;
-    `;
-    
-    // Success and error handlers with improved logging
-    this.gameState.boss.element.onload = () => {
-      console.log('✅ SUCCESS: Boss PNG loaded successfully!');
-      console.log('✅ Boss image URL was:', bossImageUrl);
-      console.log('✅ Boss image natural dimensions:', this.gameState.boss.element.naturalWidth, 'x', this.gameState.boss.element.naturalHeight);
-      console.log('✅ Boss element added to DOM successfully');
-    };
-    this.gameState.boss.element.onerror = (error) => {
-      console.error('❌ CRITICAL: Boss PNG failed to load from:', bossImageUrl);
-      console.error('❌ Error event:', error);
-      console.error('❌ Image element src:', this.gameState.boss.element.src);
-      console.error('❌ Image element complete:', this.gameState.boss.element.complete);
-      console.error('❌ Image element naturalWidth:', this.gameState.boss.element.naturalWidth);
-      console.error('❌ Check if assets/cat-boss.png exists and is accessible');
-      console.error('❌ Make sure Chrome extension is reloaded after manifest changes');
-      console.error('❌ Verify web_accessible_resources includes assets/*.png');
-      
-      // Try a direct test - log the actual URL being used
-      console.error('❌ Testing direct URL access...');
-      fetch(bossImageUrl).then(response => {
-        console.log('🔍 Direct fetch response status:', response.status);
-        console.log('🔍 Direct fetch response ok:', response.ok);
-        console.log('🔍 Direct fetch response headers:', [...response.headers.entries()]);
-        return response.blob();
-      }).then(blob => {
-        console.log('🔍 Direct fetch blob size:', blob.size);
-        console.log('🔍 Direct fetch blob type:', blob.type);
-      }).catch(fetchError => {
-        console.error('❌ Direct fetch also failed:', fetchError);
+
+    if (!bossImageUrl) {
+      console.error('❌ Boss image URL not found, using fallback emoji.');
+      const fallback = document.createElement('div');
+      fallback.textContent = '😼';
+      Object.assign(fallback.style, {
+        position: 'absolute',
+        left: `${this.gameState.boss.x}px`,
+        top: `${this.gameState.boss.y}px`,
+        fontSize: '120px',
+        zIndex: 300,
+        userSelect: 'none',
+        pointerEvents: 'none',
+        animation: 'bossFloat 2s ease-in-out infinite',
+        filter: 'drop-shadow(0 0 20px red)'
       });
-    };
-    
-    // Confirm when image loads successfully
-    this.gameState.boss.element.onload = () => {
-      console.log('SUCCESS: Boss PNG loaded successfully from assets/cat-boss.png');
-    };
-    
-    this.ui.gameArea.appendChild(this.gameState.boss.element);
-    console.log('Boss PNG element added to game area - should be visible now');
-    console.log('Boss element added to game area');
+      this.ui.gameArea.appendChild(fallback);
+      this.gameState.boss.element = fallback;
+    } else {
+      this.gameState.boss.element.src = bossImageUrl;
+      Object.assign(this.gameState.boss.element.style, {
+        position: 'absolute',
+        left: `${this.gameState.boss.x}px`,
+        top: `${this.gameState.boss.y}px`,
+        width: `${this.gameState.boss.width}px`,
+        height: `${this.gameState.boss.height}px`,
+        objectFit: 'contain',
+        userSelect: 'none',
+        pointerEvents: 'none',
+        zIndex: 300,
+        animation: 'bossFloat 2s ease-in-out infinite',
+        filter: 'drop-shadow(0 0 20px red)'
+      });
+
+      this.gameState.boss.element.onload = () =>
+        console.log('✅ Boss image loaded successfully.');
+      this.gameState.boss.element.onerror = (e) =>
+        console.error('❌ Boss image failed to load:', e);
+      this.ui.gameArea.appendChild(this.gameState.boss.element);
+    }
     
     // Show boss health bar
     this.ui.bossHealthBar.style.display = 'block';
@@ -1587,6 +1515,11 @@ window.CatAsteroidsGame = {
 
   // Play sound effect with improved error handling
   playSound: function(soundType) {
+    if (this.audio.muted) {
+      console.log('🔇 Mute active, skipping SFX:', soundType);
+      return;
+    }
+
     try {
       if (!this.audio.context) {
         console.warn('⚠️ Audio context not available for sound:', soundType);
@@ -1720,6 +1653,11 @@ window.CatAsteroidsGame = {
       track.currentTime = 0;
       track.volume = this.audio.muted ? 0 : (trackType === 'boss' ? 0.6 : 0.3);
       
+      if (this.audio.muted) {
+        console.log('🔇 Mute active, skipping music:', trackType);
+        return;
+      }
+      
       // Check if track is ready before attempting to play
       if (track.readyState >= 2) { // HAVE_CURRENT_DATA
         const playPromise = track.play();
@@ -1758,26 +1696,20 @@ window.CatAsteroidsGame = {
   toggleMute: function() {
     this.audio.muted = !this.audio.muted;
     
+    // Update all active audio objects
+    Object.values(this.audio.music).forEach(track => {
+      if (track && !track.paused) {
+        track.volume = this.audio.muted ? 0 : 0.5;
+      }
+    });
+    
     // Update mute button icon
     const muteBtn = this.ui.box.querySelector('#mute-btn');
     if (muteBtn) {
       muteBtn.textContent = this.audio.muted ? '🔇' : '🔊';
     }
     
-    // Handle music muting
-    if (this.audio.muted) {
-      // Mute current music
-      if (this.audio.music.currentTrack) {
-        this.audio.music.currentTrack.volume = 0;
-      }
-      console.log('Audio muted');
-    } else {
-      // Unmute current music
-      if (this.audio.music.currentTrack) {
-        this.audio.music.currentTrack.volume = this.audio.music.currentTrack === this.audio.music.boss ? 0.5 : 0.3;
-      }
-      console.log('Audio unmuted');
-    }
+    console.log(this.audio.muted ? 'Audio muted' : 'Audio unmuted');
   },
 
   // Game over
